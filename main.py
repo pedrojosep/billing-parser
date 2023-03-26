@@ -65,9 +65,9 @@ def load_instance_types_from_api(
     :return: A dictionary of EC2 instance types with their default number of vCPUs.
     """
     session = boto3.Session(
-        # aws_access_key_id=access_key_id,
-        # aws_secret_access_key=secret_access_key,
-        # region_name=region,
+        aws_access_key_id=access_key_id,
+        aws_secret_access_key=secret_access_key,
+        region_name=region,
     )
     ec2 = session.client("ec2")
 

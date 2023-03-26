@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+black = "*"
+click = "*"
+pandas = "*"
+ipython = "*"
+ipdb = "*"
+boto3 = "*"
+xlsxwriter = "*"
+pre-commit = "*"
+rich = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"

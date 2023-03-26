@@ -1,8 +1,8 @@
-import click
-import pandas as pd
-import boto3
 import json
 
+import boto3
+import click
+import pandas as pd
 from rich.console import Console
 
 
@@ -120,7 +120,8 @@ def parse_billing_csv(filename, instance_types):
     :param filename: The path to the billing CSV file to parse.
     :param instance_types: A dictionary of EC2 instance types with their default number of vCPUs.
 
-    :return: A tuple containing a pandas DataFrame with the parsed billing data and a pandas DataFrame with the total usage data.
+    :return: A tuple containing a pandas DataFrame with the parsed billing data and a pandas
+    DataFrame with the total usage data.
     """
     # Load CSV data into a pandas DataFrame
     df = pd.read_csv(filename)

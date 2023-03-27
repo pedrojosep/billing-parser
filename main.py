@@ -129,7 +129,6 @@ def parse_billing_csv(filename, instance_types):
     # Filter out unnecessary rows and columns
     df = df[df["RecordType"] != "AccountTotal"]
     df = df.dropna(subset=["LinkedAccountId"])
-    df["LinkedAccountId"] = df["LinkedAccountId"].astype(int)
 
     # Calculate Total VMs
     df["InstanceName"] = df["UsageType"].apply(lambda x: str(x).split(":")[-1])

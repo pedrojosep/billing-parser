@@ -124,7 +124,7 @@ def parse_billing_csv(filename, instance_types):
     DataFrame with the total usage data.
     """
     # Load CSV data into a pandas DataFrame
-    df = pd.read_csv(filename)
+    df = pd.read_csv(filename, dtype={"LinkedAccountId": "str"})
 
     # Filter out unnecessary rows and columns
     df = df[df["RecordType"] != "AccountTotal"]

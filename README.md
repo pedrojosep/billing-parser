@@ -12,6 +12,12 @@ pipenv install
 
 ## Usage
 
+To activate the virtualenv, use the following command:
+
+```bash
+pipenv shell
+```
+
 To run the app, use the following command:
 
 ```bash

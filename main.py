@@ -144,6 +144,7 @@ def parse_billing_csv(filename, instance_types):
     # Calculate Total VMs
     df["InstanceName"] = df["UsageType"].apply(lambda x: str(x).split(":")[-1])
     df["InstanceVCPU"] = df["InstanceName"].apply(lambda x: instance_types.get(x))
+    df.loc[df["InstanceVCPU"].isna(), "InstanceName"] = None
     df["numInstances"] = np.where(
         df["InstanceVCPU"].notnull(),
         df["UsageQuantity"] / df["NumHoursInMonth"],

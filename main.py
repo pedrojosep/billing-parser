@@ -1,7 +1,9 @@
+import calendar
 import json
 
 import boto3
 import click
+import numpy as np
 import pandas as pd
 from rich.console import Console
 
@@ -130,40 +132,55 @@ def parse_billing_csv(filename, instance_types):
     df = df[df["RecordType"] != "AccountTotal"]
     df = df.dropna(subset=["LinkedAccountId"])
 
+    # Calculate number of hours in the month
+    df["UsageStartDate"] = pd.to_datetime(df["UsageStartDate"])
+    df["Month"] = df["UsageStartDate"].dt.month
+    df["Year"] = df["UsageStartDate"].dt.year
+    df["NumDaysInMonth"] = df.apply(
+        lambda row: calendar.monthrange(row["Year"], row["Month"])[1], axis=1
+    )
+    df["NumHoursInMonth"] = df["NumDaysInMonth"] * 24
+
     # Calculate Total VMs
     df["InstanceName"] = df["UsageType"].apply(lambda x: str(x).split(":")[-1])
     df["InstanceVCPU"] = df["InstanceName"].apply(lambda x: instance_types.get(x))
-    df["numInstances"] = df["UsageQuantity"] / 720
-    df["TotalVMs"] = df["InstanceVCPU"] * df["numInstances"]
+    df["numInstances"] = np.where(
+        df["InstanceVCPU"].notnull(),
+        df["UsageQuantity"] / df["NumHoursInMonth"],
+        np.nan,
+    )
+    df["TotalEC2"] = df["InstanceVCPU"] * df["numInstances"]
 
     # Calculate Total Lambda
     df["TotalLambda"] = 0
     lambda_mask = (df["ProductCode"] == "AWSLambda") & (
         df["UsageType"].str.contains("Lambda-GB-Second")
     )
-    df.loc[lambda_mask, "TotalLambda"] = df["UsageQuantity"] / (3600 * 1024 * 720)
+    df.loc[lambda_mask, "TotalLambda"] = df["UsageQuantity"] / (
+        3600 * 1024 * df["NumHoursInMonth"]
+    )
 
     # Calculate Total Fargate
     df["TotalFargate"] = 0
     fargate_mask = (df["ProductCode"] == "AmazonECS") & (
         df["UsageType"].str.contains("Fargate-vCPU-Hours:perCPU")
     )
-    df.loc[fargate_mask, "TotalFargate"] = df["UsageQuantity"] / 720
+    df.loc[fargate_mask, "TotalFargate"] = df["UsageQuantity"] / df["NumHoursInMonth"]
 
     # Group by LinkedAccountId and sum usage data
     total_df = df.groupby("LinkedAccountId")[
-        ["TotalVMs", "TotalLambda", "TotalFargate"]
+        ["TotalEC2", "TotalLambda", "TotalFargate"]
     ].sum()
 
     # Calculate totals for each column
-    total_vms = total_df["TotalVMs"].sum()
+    total_vms = total_df["TotalEC2"].sum()
     total_lambda = total_df["TotalLambda"].sum()
     total_fargate = total_df["TotalFargate"].sum()
 
     # Add the total row to total_df
     total_row = pd.DataFrame(
         {
-            "TotalVMs": [total_vms],
+            "TotalEC2": [total_vms],
             "TotalLambda": [total_lambda],
             "TotalFargate": [total_fargate],
         },

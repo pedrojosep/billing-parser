@@ -5,7 +5,6 @@ import boto3
 import click
 import numpy as np
 import pandas as pd
-from rich.console import Console
 
 
 def load_aws_instance_types(
@@ -150,40 +149,44 @@ def parse_billing_csv(filename, instance_types):
         df["UsageQuantity"] / df["NumHoursInMonth"],
         np.nan,
     )
-    df["TotalEC2"] = df["InstanceVCPU"] * df["numInstances"]
+    df["EC2"] = df["InstanceVCPU"] * df["numInstances"]
 
     # Calculate Total Lambda
-    df["TotalLambda"] = 0
+    df["Lambda"] = 0
     lambda_mask = (df["ProductCode"] == "AWSLambda") & (
         df["UsageType"].str.contains("Lambda-GB-Second")
     )
-    df.loc[lambda_mask, "TotalLambda"] = df["UsageQuantity"] / (
+    df.loc[lambda_mask, "Lambda"] = df["UsageQuantity"] / (
         3600 * 1024 * df["NumHoursInMonth"]
     )
 
     # Calculate Total Fargate
-    df["TotalFargate"] = 0
+    df["Fargate"] = 0
     fargate_mask = (df["ProductCode"] == "AmazonECS") & (
         df["UsageType"].str.contains("Fargate-vCPU-Hours:perCPU")
     )
-    df.loc[fargate_mask, "TotalFargate"] = df["UsageQuantity"] / df["NumHoursInMonth"]
+    df.loc[fargate_mask, "Fargate"] = df["UsageQuantity"] / df["NumHoursInMonth"]
 
     # Group by LinkedAccountId and sum usage data
-    total_df = df.groupby("LinkedAccountId")[
-        ["TotalEC2", "TotalLambda", "TotalFargate"]
-    ].sum()
+    total_df = df.groupby("LinkedAccountId")[["EC2", "Lambda", "Fargate"]].sum()
+
+    # Reset the index and rename the first column
+    total_df = total_df.reset_index().rename(
+        columns={"LinkedAccountId": "Linked Account ID"}
+    )
 
     # Calculate totals for each column
-    total_vms = total_df["TotalEC2"].sum()
-    total_lambda = total_df["TotalLambda"].sum()
-    total_fargate = total_df["TotalFargate"].sum()
+    total_vms = total_df["EC2"].sum()
+    total_lambda = total_df["Lambda"].sum()
+    total_fargate = total_df["Fargate"].sum()
 
     # Add the total row to total_df
     total_row = pd.DataFrame(
         {
-            "TotalEC2": [total_vms],
-            "TotalLambda": [total_lambda],
-            "TotalFargate": [total_fargate],
+            "Linked Account ID": ["Total"],
+            "EC2": [total_vms],
+            "Lambda": [total_lambda],
+            "Fargate": [total_fargate],
         },
         index=["Total"],
     )
@@ -251,14 +254,9 @@ def main(
         )
 
     # Parse billing CSV and calculate total usage
-    df, total_df = parse_billing_csv(billing_csv, instance_types)
+    _, total_df = parse_billing_csv(billing_csv, instance_types)
 
-    # Use Rich to display the dataframe
-    console = Console()
-    console.print(total_df, justify="left")
-
-    # Write parsed data and total usage data to Excel file
-    write_excel(df, total_df)
+    return total_df
 
 
 @click.command()

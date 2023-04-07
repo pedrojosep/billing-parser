@@ -14,6 +14,7 @@ xlsxwriter = "*"
 pre-commit = "*"
 rich = "*"
 flake8 = "*"
+flask = "*"
 
 [dev-packages]
 

@@ -1,10 +1,10 @@
 import calendar
-import click
-import pandas as pd
 import json
-import numpy as np
 from typing import Tuple
-from rich.console import Console
+
+import click
+import numpy as np
+import pandas as pd
 
 
 def write_excel(df: pd.DataFrame, total_df: pd.DataFrame) -> None:
@@ -76,12 +76,12 @@ def parse_billing_csv(filename: str = "") -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     # Calculate the total number of VMs based on the number of virtual CPUs and the monthly usage
     # and add it as a new column to the DataFrame
-    df = df.assign(totalVMs=df["instanceVCPU"] * df["monthlyUsage"])
+    df = df.assign(VMs=df["instanceVCPU"] * df["monthlyUsage"])
 
     # Calculate the total number of Functions based on the quantity (in seconds)
     # and add it as a new column to the DataFrame
     df = df.assign(
-        totalFunctions=np.where(
+        functions=np.where(
             df["product"] == "Functions", df["quantity"] / df["NumSecondsInMonth"], 0
         )
     )
@@ -89,7 +89,7 @@ def parse_billing_csv(filename: str = "") -> Tuple[pd.DataFrame, pd.DataFrame]:
     # Calculate the total number of App Services based on the quantity (in minutes)
     # and add it as a new column to the DataFrame
     df = df.assign(
-        totalAppServices=np.where(
+        AppServices=np.where(
             df["meterCategory"] == "Azure App Service",
             df["quantity"] / df["NumHoursInMonth"],
             0,
@@ -99,22 +99,27 @@ def parse_billing_csv(filename: str = "") -> Tuple[pd.DataFrame, pd.DataFrame]:
     # Group the DataFrame by invoiceSectionName and sum the total number of VMs, Functions, and App Services
     # to get the aggregated DataFrame
     total_df = df.groupby("invoiceSectionName")[
-        ["totalVMs", "totalFunctions", "totalAppServices"]
+        ["VMs", "functions", "AppServices"]
     ].sum()
 
+    # Reset the index and rename the first column
+    total_df = total_df.reset_index().rename(
+        columns={"invoiceSectionName": "Section Name"}
+    )
+
     # Calculate totals for each column
-    total_vms = total_df["totalVMs"].sum()
-    total_functions = total_df["totalFunctions"].sum()
-    total_apps_service = total_df["totalAppServices"].sum()
+    total_vms = total_df["VMs"].sum()
+    total_functions = total_df["functions"].sum()
+    total_apps_service = total_df["AppServices"].sum()
 
     # Add the total row to total_df
     total_row = pd.DataFrame(
         {
-            "totalVMs": [total_vms],
-            "totalFunctions": [total_functions],
-            "totalAppServices": [total_apps_service],
+            "Section Name": ["Total"],
+            "VMs": [total_vms],
+            "functions": [total_functions],
+            "AppServices": [total_apps_service],
         },
-        index=["Total"],
     )
     total_df = pd.concat([total_df, total_row])
 
@@ -131,13 +136,9 @@ def main(billing_csv: str = None) -> None:
     """
     print("Processing Azure csv")
 
-    df, total_df = parse_billing_csv(billing_csv)
+    _, total_df = parse_billing_csv(billing_csv)
 
-    # Use Rich to display the dataframe
-    console = Console()
-    console.print(total_df, justify="left")
-
-    write_excel(df, total_df)
+    return total_df
 
 
 @click.command()

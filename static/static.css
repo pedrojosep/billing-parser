@@ -1,0 +1,40 @@
+@import url('https://rsms.me/inter/inter.css');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f9fafb;
+}
+
+h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+form {
+    margin-top: 2rem;
+}
+
+button {
+    background-color: #3B82F6;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    border: none;
+    cursor: pointer;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 0.5rem;
+}
+
+th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    text-align: left;
+}

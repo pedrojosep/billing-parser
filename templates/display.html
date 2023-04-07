@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{title}}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.4/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css">
+
+    <!-- Add jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Add DataTables CSS and JavaScript -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+    <!-- Add Buttons extension for DataTables -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+
+    <!-- Add FixedColumns extension for DataTables -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedcolumns/3.3.3/css/fixedColumns.bootstrap5.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/fixedcolumns/3.3.3/js/dataTables.fixedColumns.min.js"></script>
+
+    <!-- Add JSZip for Excel export functionality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="max-w-2xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-4">{{title}}</h1>
+        <table id="csv-table" class="border border-gray-400 rounded-lg overflow-hidden">
+            <thead class="bg-gray-200">
+                <tr>
+                    {% for column in df.columns %}
+                        <th class="px-4 py-2">{{ column }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in df.values %}
+                    <tr class="bg-gray-100">
+                        {% for val in row %}
+                            <td class="px-4 py-2 border text-right">
+                                {% if val is number %}
+                                    {{ '%.2f'|format(val) }}
+                                {% else %}
+                                    {{ val }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+
+            <tfoot>
+                <tr>
+                    {% for val in last_row %}
+                        <th class="px-4 py-2 border text-right">
+                            {{ '%.2f'|format(val) if val is number else val }}
+                        </th>
+                    {% endfor %}
+                </tr>
+            </tfoot>
+
+        </table>
+        <div class="text-center mt-4">
+            <a href="{{ url_for('index') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded">Upload another CSV</a>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            var availableHeight = window.innerHeight - ($('h1').outerHeight(true) + $('table').offset().top + 220);
+
+            var table = $('#csv-table').DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'csv',
+                        text: 'Export as CSV',
+                    },
+                    {
+                        extend: 'excel',
+                        text: 'Export as Excel',
+                    },
+                ],
+                scrollY: availableHeight + 'px',
+                scrollCollapse: true,
+                paging: false,
+            });
+
+            new $.fn.dataTable.FixedColumns(table, {
+                bottom: true,
+            });
+        });
+
+        </script>
+
+</body>
+</html>

@@ -2,6 +2,7 @@ import calendar
 import json
 
 import boto3
+import botocore
 import click
 import numpy as np
 import pandas as pd
@@ -33,7 +34,8 @@ def load_aws_instance_types(
             secret_access_key=secret_access_key,
             region=region,
         )
-        save_instance_types_to_cache(instance_types)
+        if instance_types:
+            save_instance_types_to_cache(instance_types)
 
     return instance_types
 
@@ -55,52 +57,52 @@ def load_instance_types_from_cache(
     return cache.get("instance_types", {})
 
 
+def describe_instance_types(ec2, next_token=None):
+    """
+    Helper function to describe EC2 instance types.
+    :param ec2: EC2 client object.
+    :param next_token: Optional token to retrieve the next page of results.
+    :return: A list of EC2 instance types with their default number of vCPUs.
+    """
+    filters = [{"Name": "processor-info.supported-architecture", "Values": ["x86_64"]}]
+    kwargs = {"DryRun": False, "Filters": filters, "MaxResults": 100}
+    if next_token:
+        kwargs["NextToken"] = next_token
+    try:
+        response = ec2.describe_instance_types(**kwargs)
+        instance_types = response["InstanceTypes"]
+        if "NextToken" in response:
+            instance_types += describe_instance_types(ec2, response["NextToken"])
+        return instance_types
+    except botocore.exceptions.BotoCoreError as e:
+        print(f"Error retrieving instance types: {e}")
+        return []
+
+
 def load_instance_types_from_api(
     access_key_id=None, secret_access_key=None, region=None
 ):
     """
     Load instance types dictionary from the EC2 API.
-
     :param access_key_id: Optional AWS access key ID to authenticate the API request.
     :param secret_access_key: Optional AWS secret access key to authenticate the API request.
     :param region: Optional AWS region name to retrieve the instance types from.
-
     :return: A dictionary of EC2 instance types with their default number of vCPUs.
     """
-    session = boto3.Session(
-        aws_access_key_id=access_key_id,
-        aws_secret_access_key=secret_access_key,
-        region_name=region,
-    )
-    ec2 = session.client("ec2")
-
-    instance_types = []
-    response = ec2.describe_instance_types(
-        DryRun=False,
-        Filters=[
-            {
-                "Name": "processor-info.supported-architecture",
-                "Values": ["x86_64"],
-            },
-        ],
-        MaxResults=100,
-    )
-    instance_types.extend(response["InstanceTypes"])
-    while "NextToken" in response:
-        response = ec2.describe_instance_types(
-            DryRun=False,
-            Filters=[
-                {
-                    "Name": "processor-info.supported-architecture",
-                    "Values": ["x86_64"],
-                },
-            ],
-            MaxResults=100,
-            NextToken=response["NextToken"],
+    try:
+        session = boto3.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region,
         )
-        instance_types.extend(response["InstanceTypes"])
-
-    return {i["InstanceType"]: i["VCpuInfo"]["DefaultVCpus"] for i in instance_types}
+        ec2 = session.client("ec2")
+        instance_types = describe_instance_types(ec2)
+        return {
+            i["InstanceType"]: i["VCpuInfo"]["DefaultVCpus"] for i in instance_types
+        }
+    except botocore.exceptions.BotoCoreError as e:
+        print(f"Error connecting to boto3: {e}")
+        return {}
 
 
 def save_instance_types_to_cache(
@@ -240,5 +242,9 @@ def main(
             region=region,
             use_cache=False,
         )
+
+        # If there was an error retrieving the instance use the cache
+        if not instance_types:
+            instance_types = load_instance_types_from_cache()
 
     return parse_billing_csv(billing_csv, instance_types)

@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 from rich.console import Console
 
+from .utils import write_excel
+
 
 def load_aws_instance_types(
     access_key_id=None,
@@ -194,20 +196,6 @@ def parse_billing_csv(filename, instance_types):
     total_df = pd.concat([total_df, total_row])
 
     return df, total_df
-
-
-def write_excel(df, total_df):
-    """
-    Write a pandas DataFrame to an Excel file with two sheets: Detail and Total.
-
-    :param df: The pandas DataFrame to write to the Excel file.
-    :param total_df: The pandas DataFrame containing the total usage data to write to the Total sheet.
-    """
-    print("Saving results into output.xlsx")
-    writer = pd.ExcelWriter("output.xlsx", engine="xlsxwriter")
-    df.to_excel(writer, sheet_name="Detail")
-    total_df.to_excel(writer, sheet_name="Total")
-    writer.close()
 
 
 def main(

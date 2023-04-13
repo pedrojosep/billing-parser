@@ -1,58 +1,16 @@
 import pandas as pd
 
-from .aws_parser import main as aws_parser
-from .azure_parser import main as azure_parser
 
-
-def get_csv_parser(file_or_filename):
+def write_excel(df: pd.DataFrame, total_df: pd.DataFrame) -> None:
     """
-    Check whether the CSV file belongs to AWS or Azure based on its header.
+    Write a pandas DataFrame to an Excel file.
 
     Args:
-        file_or_filename (Union[file, str]): Either a file object or a filename containing the CSV data.
-
-    Returns:
-        function: Either aws_parser or azure_parser depending on the header of the CSV file.
+        df (pd.DataFrame): The original DataFrame.
+        total_df (pd.DataFrame): The aggregated DataFrame.
     """
-
-    if isinstance(file_or_filename, str):
-        with open(file_or_filename, "r") as file:
-            header = pd.read_csv(file, nrows=0).columns
-            file.seek(0)  # Reset file pointer to beginning of file
-    else:
-        file = file_or_filename.stream
-        if isinstance(file, bytes):
-            file = file.decode("utf-8")
-        header = pd.read_csv(file, nrows=0).columns
-        file_or_filename.stream.seek(0)  # Reset file pointer to beginning of file
-
-    # Check if the required columns for AWS are present in the header
-    if all(
-        col in header
-        for col in [
-            "RecordType",
-            "LinkedAccountId",
-            "UsageStartDate",
-            "UsageType",
-            "UsageQuantity",
-        ]
-    ):
-        return "AWS Billing Summary", aws_parser
-
-    # Check if the required columns for Azure are present in the header
-    if all(
-        col in header
-        for col in [
-            "billingPeriodStartDate",
-            "unitOfMeasure",
-            "product",
-            "quantity",
-            "meterCategory",
-            "invoiceSectionName",
-            "additionalInfo",
-        ]
-    ):
-        return "Azure Billing Summary", azure_parser
-
-    # If neither set of required columns are present, return None
-    return "", None
+    print("Saving results into output.xlsx")
+    writer = pd.ExcelWriter("output.xlsx", engine="xlsxwriter")
+    total_df.to_excel(writer, sheet_name="Total")
+    df.to_excel(writer, sheet_name="Original")
+    writer.close()

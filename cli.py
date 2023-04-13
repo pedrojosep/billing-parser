@@ -1,6 +1,6 @@
 import click
 
-from .utils import get_csv_parser
+from .get_parser import get_csv_parser
 
 
 @click.command()

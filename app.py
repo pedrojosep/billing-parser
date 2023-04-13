@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 
-from .utils import get_csv_parser
+from .get_parser import get_csv_parser
 
 app = Flask(__name__)
 

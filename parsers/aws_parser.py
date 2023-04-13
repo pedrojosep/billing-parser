@@ -6,7 +6,6 @@ import click
 import numpy as np
 import pandas as pd
 
-
 DEFAULT_CACHE_FILE_PATH = "parsers/cache/instance_types_cache.json"
 
 

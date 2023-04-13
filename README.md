@@ -21,21 +21,21 @@ pipenv shell
 To run the app, use the following command:
 
 ```bash
-python main.py billing.csv --use-cache
+python cli.py billing.csv
 ```
 
-This will parse the AWS billing CSV file and calculate total usage for EC2, Lambda, and Fargate. The billing.csv file should be in the same directory as main.py. The --use-cache flag is used to enable or disable use of the cache (default: enabled).
+This will parse the AWS billing CSV file and calculate total usage for EC2, Lambda, and Fargate. The billing.csv file should be in the same directory as cli.py. The --use-cache flag is used to enable or disable use of the cache (default: enabled).
 
 If you want to use the cache without providing AWS credentials, you can use the following command:
 
 ```bash
-python main.py billing.csv --use-cache
+python cli.py billing.csv --use-cache
 ```
 
 If you want to use AWS credentials without using the cache, you can use the following command:
 
 ```bash
-python main.py billing.csv --no-cache --access-key-id <ACCESS_KEY_ID> --secret-access-key <SECRET_ACCESS_KEY> --region <REGION>
+python cli.py billing.csv --no-cache --access-key-id <ACCESS_KEY_ID> --secret-access-key <SECRET_ACCESS_KEY> --region <REGION>
 ```
 
 Replace <ACCESS_KEY_ID>, <SECRET_ACCESS_KEY>, and <REGION> with your AWS access key ID, secret access key, and region, respectively. Note that the --no-cache flag is used to disable use of the cache in this example. If you want to enable the cache, remove this flag from the command.

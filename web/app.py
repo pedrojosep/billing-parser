@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 
-from .get_parser import get_csv_parser
+from ..parsers import get_csv_parser
 
 app = Flask(__name__)
 
@@ -16,7 +16,7 @@ def upload():
     title, parser = get_csv_parser(file)
 
     if parser:
-        df = parser(file)
+        df = parser(file)[1]
         last_row = df.iloc[-1]
         df = df.iloc[:-1]
 

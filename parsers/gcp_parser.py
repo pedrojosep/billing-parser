@@ -1,11 +1,7 @@
 import json
 from typing import Tuple
 
-import click
 import pandas as pd
-from rich.console import Console
-
-from .utils import write_excel
 
 
 def extract_vcpu(row: pd.Series) -> int:
@@ -138,32 +134,11 @@ def parse_billing_csv(filename: str = "") -> Tuple[pd.DataFrame, pd.DataFrame]:
     return df, total_df
 
 
-def main(billing_csv: str = None, write_file: bool = False) -> None:
+def main(billing_csv: str = None, *args, **kwargs) -> None:
     """
-    The main function of the script. Parses the billing CSV file and writes the results to an Excel file.
+    The main function of the script. Parses the billing CSV file.
 
     Args:
         billing_csv (str): The path to the billing CSV file.
     """
-    print("Processing Azure csv")
-
-    df, total_df = parse_billing_csv(billing_csv)
-
-    if write_file:
-        # Use Rich to display the dataframe
-        console = Console()
-        console.print(total_df, justify="left")
-
-        write_excel(df, total_df)
-
-    return total_df
-
-
-@click.command()
-@click.argument("billing_csv", type=click.Path(exists=True))
-def command(billing_csv: str = None) -> None:
-    main(billing_csv, True)
-
-
-if __name__ == "__main__":
-    command()
+    return parse_billing_csv(billing_csv)

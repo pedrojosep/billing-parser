@@ -5,9 +5,9 @@ import boto3
 import click
 import numpy as np
 import pandas as pd
-from rich.console import Console
 
-from .utils import write_excel
+
+DEFAULT_CACHE_FILE_PATH = "parsers/cache/instance_types_cache.json"
 
 
 def load_aws_instance_types(
@@ -40,7 +40,7 @@ def load_aws_instance_types(
 
 
 def load_instance_types_from_cache(
-    cache_file_path: str = "instance_types_cache.json",
+    cache_file_path: str = DEFAULT_CACHE_FILE_PATH,
 ) -> dict:
     """
     Load instance types dictionary from the cache file.
@@ -105,7 +105,7 @@ def load_instance_types_from_api(
 
 
 def save_instance_types_to_cache(
-    instance_types, cache_file_path: str = "instance_types_cache.json"
+    instance_types, cache_file_path: str = DEFAULT_CACHE_FILE_PATH
 ) -> None:
     """
     Save instance types dictionary to the cache file.
@@ -204,7 +204,8 @@ def main(
     access_key_id: str = None,
     secret_access_key: str = None,
     region: str = None,
-    write_file: bool = False,
+    *args,
+    **kwargs,
 ) -> None:
     """
     Parse an AWS billing CSV file and calculate total usage for EC2, Lambda, and Fargate.
@@ -216,8 +217,6 @@ def main(
     :param secret_access_key: Optional AWS secret access key for API authentication.
     :param region: Optional AWS region name for retrieving EC2 instance types.
     """
-    print("Processing AWS csv")
-
     # Ask user for billing CSV path
     billing_csv = billing_csv or click.prompt(
         "Please provide the path to the AWS billing CSV file",
@@ -243,61 +242,4 @@ def main(
             use_cache=False,
         )
 
-    # Parse billing CSV and calculate total usage
-    df, total_df = parse_billing_csv(billing_csv, instance_types)
-
-    if write_file:
-        # Use Rich to display the dataframe
-        console = Console()
-        console.print(total_df, justify="left")
-
-        # Write parsed data and total usage data to Excel file
-        write_excel(df, total_df)
-
-    return total_df
-
-
-@click.command()
-@click.argument("billing_csv", type=click.Path(exists=True))
-@click.option(
-    "--use-cache/--no-cache",
-    default=True,
-    help="Enable or disable use of cache (default: enabled)",
-)
-@click.option(
-    "--access-key-id",
-    type=str,
-    default=None,
-    help="AWS access key ID for API authentication",
-)
-@click.option(
-    "--secret-access-key",
-    type=str,
-    default=None,
-    help="AWS secret access key for API authentication",
-)
-@click.option(
-    "--region",
-    type=str,
-    default=None,
-    help="AWS region name for retrieving EC2 instance types",
-)
-def command(
-    billing_csv: str = None,
-    use_cache: bool = True,
-    access_key_id: str = None,
-    secret_access_key: str = None,
-    region: str = None,
-) -> None:
-    main(
-        billing_csv,
-        use_cache,
-        access_key_id,
-        secret_access_key,
-        region,
-        True,
-    )
-
-
-if __name__ == "__main__":
-    command()
+    return parse_billing_csv(billing_csv, instance_types)

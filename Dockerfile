@@ -5,7 +5,7 @@ FROM python:3.11
 WORKDIR /app
 
 # Set the environment variables
-ENV FLASK_APP=app.py
+ENV FLASK_APP=web/app.py
 
 # Copy the Pipfile and Pipfile.lock files into the container
 COPY Pipfile Pipfile.lock ./

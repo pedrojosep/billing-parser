@@ -1,11 +1,11 @@
 import click
 
-from utils import get_csv_parser
+from .utils import get_csv_parser
 
 
 @click.command()
 @click.argument("billing_csv", type=click.Path(exists=True))
-def main(billing_csv: str = None) -> None:
+def cli(billing_csv: str = None) -> None:
     """
     The main function of the script. Parses the billing CSV file and writes the results to an Excel file.
 
@@ -19,4 +19,4 @@ def main(billing_csv: str = None) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    cli()

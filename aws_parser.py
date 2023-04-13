@@ -5,6 +5,7 @@ import boto3
 import click
 import numpy as np
 import pandas as pd
+from rich.console import Console
 
 
 def load_aws_instance_types(
@@ -215,6 +216,7 @@ def main(
     access_key_id: str = None,
     secret_access_key: str = None,
     region: str = None,
+    write_file: bool = False,
 ) -> None:
     """
     Parse an AWS billing CSV file and calculate total usage for EC2, Lambda, and Fargate.
@@ -254,7 +256,15 @@ def main(
         )
 
     # Parse billing CSV and calculate total usage
-    _, total_df = parse_billing_csv(billing_csv, instance_types)
+    df, total_df = parse_billing_csv(billing_csv, instance_types)
+
+    if write_file:
+        # Use Rich to display the dataframe
+        console = Console()
+        console.print(total_df, justify="left")
+
+        # Write parsed data and total usage data to Excel file
+        write_excel(df, total_df)
 
     return total_df
 
@@ -297,6 +307,7 @@ def command(
         access_key_id,
         secret_access_key,
         region,
+        True,
     )
 
 

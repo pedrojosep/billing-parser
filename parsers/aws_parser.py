@@ -133,6 +133,13 @@ def parse_billing_csv(filename, instance_types):
 
     # Filter out unnecessary rows and columns
     df = df[df["RecordType"] != "AccountTotal"]
+
+    if df["LinkedAccountId"].isnull().all():
+        mask = df["RecordType"] == "PayerLineItem"
+        df.loc[mask, "LinkedAccountId"] = df.loc[mask, "LinkedAccountId"].fillna(
+            df["PayerAccountId"]
+        )
+
     df = df.dropna(subset=["LinkedAccountId"])
 
     # Calculate number of hours in the month
@@ -143,6 +150,8 @@ def parse_billing_csv(filename, instance_types):
         lambda row: calendar.monthrange(row["Year"], row["Month"])[1], axis=1
     )
     df["NumHoursInMonth"] = df["NumDaysInMonth"] * 24
+
+    df["UsageQuantity"] = df["UsageQuantity"].str.replace(",", "").astype(float)
 
     # Calculate Total VMs
     df["InstanceName"] = df["UsageType"].apply(lambda x: str(x).split(":")[-1])
